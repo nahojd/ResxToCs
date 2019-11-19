@@ -91,7 +91,7 @@ namespace ResxToCs.MSBuild
 			int сonvertedFileCount = 0;
 			int failedFileCount = 0;
 
-			foreach (string filePath in Directory.EnumerateFiles(resourceDirectory, "*.resx", SearchOption.AllDirectories))
+			foreach (string filePath in Directory.EnumerateFiles(resourceDirectory, "LocalizedText.resx", SearchOption.AllDirectories))
 			{
 				string relativeFilePath = filePath.Substring(resourceDirectory.Length);
 
