@@ -2,6 +2,7 @@
 using System.IO;
 #if !NET40
 using System.Reflection;
+using System.Text.RegularExpressions;
 #endif
 
 using ResxToCs.Core;
@@ -71,7 +72,7 @@ namespace ResxToCs.DotNet
 					break;
 				case AppMode.Conversion:
 					returnCode = Convert(_appConfig.InputDirectory, _appConfig.Namespace,
-						_appConfig.InternalAccessModifier) ? 0 : -1;
+						_appConfig.InternalAccessModifier, _appConfig.CreateForDefaultLanguageOnly) ? 0 : -1;
 					break;
 				default:
 					throw new AppUsageException("Unknown application mode.");
@@ -135,6 +136,11 @@ namespace ResxToCs.DotNet
 								SetAppMode(appConfig, AppMode.Conversion);
 								appConfig.InternalAccessModifier = true;
 								break;
+							case "-DEFAULT-LANGUAGE-ONLY":
+							case "D":
+								SetAppMode(appConfig, AppMode.Conversion);
+								appConfig.CreateForDefaultLanguageOnly = true;
+								break;
 							default:
 								SetAppMode(appConfig, AppMode.Conversion);
 								appConfig.InputDirectory = TrimQuotes(arg);
@@ -180,9 +186,10 @@ namespace ResxToCs.DotNet
 		/// <param name="resourceNamespace">Namespace of resource</param>
 		/// <param name="internalAccessModifier">Flag for whether to set the access modifier of
 		/// resource class to internal</param>
+		/// <param name="createForDefaultLanguageOnly">Flag for whether to create cs files only for the default language</param>
 		/// <returns>Result of conversion (true - success; false - failure)</returns>
 		private static bool Convert(string resourceDirectory, string resourceNamespace,
-			bool internalAccessModifier)
+			bool internalAccessModifier, bool createForDefaultLanguageOnly)
 		{
 			bool result = true;
 			string processedResourceDirectory;
@@ -220,6 +227,11 @@ namespace ResxToCs.DotNet
 
 			foreach (string filePath in Directory.EnumerateFiles(processedResourceDirectory, "*.resx", SearchOption.AllDirectories))
 			{
+				if (createForDefaultLanguageOnly && IsLanguageSpecified(filePath)) {
+					WriteInfoLine($"Skipping {filePath}");
+					continue;
+				}
+
 				string relativeFilePath = filePath.Substring(processedResourceDirectory.Length);
 
 				try
@@ -283,6 +295,9 @@ namespace ResxToCs.DotNet
 
 			return result;
 		}
+
+		private static Regex LangFileNameExpression = new Regex(@"\.[a-z]{2}\.resx");
+		private static bool IsLanguageSpecified(string filePath) => LangFileNameExpression.IsMatch(filePath);
 
 		/// <summary>
 		/// Gets a application version number
@@ -418,6 +433,7 @@ namespace ResxToCs.DotNet
 			outputStream.WriteLine("  -v, --version                    Show the version number.");
 			outputStream.WriteLine("  -n, --namespace <NAMESPACE>      Namespace into which the resource class is placed.");
 			outputStream.WriteLine("  -i, --internal-access-modifier   Set the access modifier of resource class to internal.");
+			outputStream.WriteLine("  -d, --default-language-only               Only generate code for resource files without language specifier in filename");
 		}
 
 		/// <summary>

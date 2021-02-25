@@ -41,6 +41,9 @@
 			set;
 		}
 
+		/// <summary>Gets os sets a flag for whether to create cs files only for the default language</summary>
+		public bool CreateForDefaultLanguageOnly { get; internal set; }
+
 
 		/// <summary>
 		/// Constructs an instance of application configuration settings
